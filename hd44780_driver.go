@@ -8,7 +8,7 @@ import (
 	"gobot.io/x/gobot/drivers/gpio"
 )
 
-// HD44780Driver is the gobot driver for modules based on the HD44780.
+// HD44780Driver is a gobot driver for modules based on the HD44780.
 // Datasheet: https://www.beta-estore.com/download/rk/RK-10290_410.pdf
 type HD44780Driver struct {
 	pinRS    *gpio.DirectPinDriver
@@ -42,16 +42,16 @@ func NewHD44780Driver(a gobot.Connection, rs, rw, e string, data [8]string) *HD4
 	}
 }
 
-// Halt implements the Driver interface
+// Halt implements the Driver interface.
 func (h *HD44780Driver) Halt() (err error) { return }
 
-// Name returns the HD44780Drivers name
+// Name returns the HD44780Drivers name.
 func (h *HD44780Driver) Name() string { return h.name }
 
-// SetName sets the HD44780Drivers name
+// SetName sets the HD44780Drivers name.
 func (h *HD44780Driver) SetName(n string) { h.name = n }
 
-// Connection returns the HD44780Driver Connection
+// Connection returns the HD44780Driver Connection.
 func (h *HD44780Driver) Connection() gobot.Connection { return h.connection }
 
 // Off turns all pins low.
@@ -68,17 +68,13 @@ func (h *HD44780Driver) Off() error {
 // Initialize turns on the display and enables the cursor.
 func (h *HD44780Driver) Initialize(displayCursor bool) error {
 	h.Off()
+	h.pinE.On()
 	if displayCursor {
 		h.pinsData[0].On()
 		h.pinsData[1].On()
-	} else {
-		h.pinsData[0].Off()
-		h.pinsData[1].Off()
 	}
 	h.pinsData[2].On()
 	h.pinsData[3].On()
-	h.pinE.On()
-	time.Sleep(h.execTime)
 	h.pinE.Off()
 	return nil
 }
@@ -86,18 +82,67 @@ func (h *HD44780Driver) Initialize(displayCursor bool) error {
 // Clear clears the display.
 func (h *HD44780Driver) Clear() error {
 	h.Off()
+	h.pinE.On()
 	h.pinsData[0].On()
+	h.pinE.Off()
+	return nil
+}
+
+// Home resets the cursor to the position of the first charactor on the first
+// row.
+func (h *HD44780Driver) Home() error {
+	h.pinE.On()
+	h.SendData(byte(0x02))
+	h.pinE.Off()
+	return nil
+}
+
+// RightToLeft enables writing from right to left.
+func (h *HD44780Driver) RightToLeft() error {
+	h.pinE.On()
+	h.SendData(byte(0x04))
+	h.pinE.Off()
+	return nil
+}
+
+// LeftToRight enables writing from left to right.
+func (h *HD44780Driver) LeftToRight() error {
+	h.pinE.On()
+	h.SendData(byte(0x06))
+	h.pinE.Off()
+	return nil
+}
+
+// Left moves the cursor left.
+func (h *HD44780Driver) Left() error {
+	h.SendData(byte(16))
 	h.pinE.On()
 	time.Sleep(h.execTime)
 	h.pinE.Off()
 	return nil
 }
 
-func (h *HD44780Driver) FunctionSet(data byte) error {
-	h.Off()
-	h.SendData(data)
+// Right moves the cursor right.
+func (h *HD44780Driver) Right() error {
+	h.pinE.On()
+	h.SendData(byte(20))
+	h.pinE.Off()
+	return nil
+}
+
+// ShiftLeft moves the screen left.
+func (h *HD44780Driver) ShiftLeft() error {
+	h.SendData(byte(24))
 	h.pinE.On()
 	time.Sleep(h.execTime)
+	h.pinE.Off()
+	return nil
+}
+
+// ShiftRight moves the screen right.
+func (h *HD44780Driver) ShiftRight() error {
+	h.pinE.On()
+	h.SendData(byte(28))
 	h.pinE.Off()
 	return nil
 }
@@ -118,6 +163,7 @@ func (h *HD44780Driver) SendData(data byte) error {
 
 // Print splits an ASCII string into bytes and sends them to the display.
 func (h *HD44780Driver) Print(strs ...string) error {
+	h.Off()
 	h.pinRS.On()
 	for _, str := range strs {
 		for _, data := range str {
