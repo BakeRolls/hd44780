@@ -1,9 +1,8 @@
-package main
+## GoBot HD44780 Driver
 
-import (
-	"gobot.io/x/gobot/platforms/raspi"
-)
+This is a driver for Character LCDs based on the HD44780 using GoBot.
 
+```go
 func main() {
 	r := raspi.NewAdaptor()
 	lcd := NewHD44780Driver(r, "7", "12", "11", [8]string{"13", "16", "15", "18", "22", "29", "32", "31"})
@@ -17,3 +16,4 @@ func main() {
 	lcd.Right()
 	lcd.Print("---")
 }
+```
