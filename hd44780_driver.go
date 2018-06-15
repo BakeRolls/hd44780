@@ -55,7 +55,7 @@ func (h *HD44780Driver) SetName(n string) { h.name = n }
 func (h *HD44780Driver) Connection() gobot.Connection { return h.connection }
 
 // Off turns all pins low.
-func (h *HD44780Driver) Off() error {
+func (h *HD44780Driver) off() error {
 	h.pinRS.Off()
 	h.pinRW.Off()
 	h.pinE.Off()
@@ -65,9 +65,9 @@ func (h *HD44780Driver) Off() error {
 	return nil
 }
 
-// Initialize turns on the display and enables the cursor.
-func (h *HD44780Driver) Initialize(displayCursor bool) error {
-	h.Off()
+// Display turns on the display and optionally enables the cursor.
+func (h *HD44780Driver) Display(displayCursor bool) error {
+	h.off()
 	h.pinE.On()
 	if displayCursor {
 		h.pinsData[0].On()
@@ -81,9 +81,9 @@ func (h *HD44780Driver) Initialize(displayCursor bool) error {
 
 // Clear clears the display.
 func (h *HD44780Driver) Clear() error {
-	h.Off()
+	h.off()
 	h.pinE.On()
-	h.pinsData[0].On()
+	h.SendData(byte(1))
 	h.pinE.Off()
 	return nil
 }
@@ -92,7 +92,7 @@ func (h *HD44780Driver) Clear() error {
 // row.
 func (h *HD44780Driver) Home() error {
 	h.pinE.On()
-	h.SendData(byte(0x02))
+	h.SendData(byte(2))
 	h.pinE.Off()
 	return nil
 }
@@ -100,7 +100,7 @@ func (h *HD44780Driver) Home() error {
 // RightToLeft enables writing from right to left.
 func (h *HD44780Driver) RightToLeft() error {
 	h.pinE.On()
-	h.SendData(byte(0x04))
+	h.SendData(byte(4))
 	h.pinE.Off()
 	return nil
 }
@@ -108,16 +108,15 @@ func (h *HD44780Driver) RightToLeft() error {
 // LeftToRight enables writing from left to right.
 func (h *HD44780Driver) LeftToRight() error {
 	h.pinE.On()
-	h.SendData(byte(0x06))
+	h.SendData(byte(6))
 	h.pinE.Off()
 	return nil
 }
 
 // Left moves the cursor left.
 func (h *HD44780Driver) Left() error {
-	h.SendData(byte(16))
 	h.pinE.On()
-	time.Sleep(h.execTime)
+	h.SendData(byte(16))
 	h.pinE.Off()
 	return nil
 }
@@ -132,9 +131,8 @@ func (h *HD44780Driver) Right() error {
 
 // ShiftLeft moves the screen left.
 func (h *HD44780Driver) ShiftLeft() error {
-	h.SendData(byte(24))
 	h.pinE.On()
-	time.Sleep(h.execTime)
+	h.SendData(byte(24))
 	h.pinE.Off()
 	return nil
 }
@@ -163,7 +161,7 @@ func (h *HD44780Driver) SendData(data byte) error {
 
 // Print splits an ASCII string into bytes and sends them to the display.
 func (h *HD44780Driver) Print(strs ...string) error {
-	h.Off()
+	h.off()
 	h.pinRS.On()
 	for _, str := range strs {
 		for _, data := range str {
